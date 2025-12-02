@@ -10,6 +10,8 @@ import (
 	"os"
 	"strings"
 	"time"
+	
+	"github.com/fatih/color"
 )
 
 type Variant struct {
@@ -17,7 +19,9 @@ type Variant struct {
 }
 
 type Task struct {
+	Number int `json:"number"`
 	Key string `json:"key"`
+	SubTasks []Task `json:"subTask"`
 }
 
 func main() {
@@ -28,12 +32,11 @@ func main() {
 		log.Fatalln("Provide task or variant id.")
 	}
 	
-	// 25013197
 	id := os.Args[1]
 	
 	if len(id) < 8 {
 		task := findTask(ctx, id)
-		fmt.Println(formatKey(task.Key))
+		fmt.Println(formatTask(task))
 	} else {
 		variant := findVariant(ctx, id)
 		for i, t := range variant.Tasks {
@@ -110,6 +113,23 @@ func taskURL(id string) string {
 
 func variantURL(id string) string {
 	return fmt.Sprintf("https://kompege.ru/api/v1/variant/kim/%s", id)
+}
+
+func formatTask(task Task) string {
+	builder := strings.Builder{}
+	
+	black := color.New(color.FgBlack).SprintFunc()
+	builder.WriteString(black(fmt.Sprintf("[%d]: ", task.Number)))
+	builder.WriteString(formatKey(task.Key) + "\t")
+	
+	if len(task.SubTasks) > 0 {
+		for _, t := range task.SubTasks {
+			builder.WriteString(black(fmt.Sprintf("[%d]: ", t.Number)))
+			builder.WriteString(formatKey(t.Key) + "\t")
+		}
+	}
+	
+	return builder.String()
 }
 
 func formatKey(key string) string {
